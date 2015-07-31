@@ -80,7 +80,8 @@ $(function () {
 		return market[name].avg;
 	}
 
-	var marketCacheTime = 1000 * 60 * 5;
+	// Refresh item prices every 30 minutes
+	var marketCacheTime = 1000 * 60 * 30;
 
 	function searchMarket(name, f) {
 		var now = Date.now();
@@ -92,8 +93,9 @@ $(function () {
 
 		if (name in market) {
 			var cache = market[name];
+			var distribute = (Math.random() - 0.5) * marketCacheTime * 0.5;
 
-			if ((now - cache.then) < (marketCacheTime + Math.random() * marketCacheTime * 0.5)) {
+			if ((now - cache.then) < (marketCacheTime + distribute)) {
 				f(cache);
 				return;
 			}
@@ -167,9 +169,52 @@ $(function () {
 			return pb - pa;
 		});
 
+		tbody.empty();
+
 		for (var i=0; i < sorted.length; i++) {
 			addRow(sorted[i]);
 		}
+	}
+
+	function addRow(list) {
+		var tr, fullName;
+		var item = list[0];
+		var type = item.typeLine;
+
+		if (item.name === item.typeLine) {
+			fullName = type;
+		} else {
+			fullName = String(item.name) + " " + String(item.typeLine);
+		}
+
+		var rarity = String(rarityTypes[item.frameType]);
+
+		tr = $('<tr></tr>');
+
+		tr.append($('<td></td>')
+			.append('<input type="checkbox">')
+		);
+
+		tr.append($('<td></td>')
+			.append($('<img class="icon">').attr('src', item.icon))
+			.append($('<span></span>')
+				.text(appendQuantity(fullName, list.length))
+				.attr('class', rarity.toLowerCase())
+			)
+		);
+
+		var estimate = $('<td></td>').text('');
+		tr.append(estimate);
+
+		if (rarity === 'Unique' || rarity === 'Currency' || rarity === 'Rare' || rarity === 'Quest') {
+			searchMarket(item.name || item.typeLine, function (result) {
+				estimate.text(Math.round(result.avg));
+			});
+		}
+
+		tr.append($('<td></td>').text(''));
+
+		tbody.append(tr);
 	}
 
 	function appendQuantity(str, qty) {
@@ -210,44 +255,6 @@ $(function () {
 		return false;
 	}
 
-	function addRow(list) {
-		var tr, fullName;
-		var item = list[0];
-		var type = item.typeLine;
-
-		if (item.name === item.typeLine) {
-			fullName = type;
-		} else {
-			fullName = String(item.name) + " " + String(item.typeLine);
-		}
-
-		var rarity = String(rarityTypes[item.frameType]);
-
-		tr = $('<tr></tr>');
-
-		tr.append($('<td></td>')
-			.append($('<img class="icon">').attr('src', item.icon))
-			.append($('<span></span>')
-				.text(appendQuantity(fullName, list.length))
-				.attr('class', rarity.toLowerCase())
-			)
-		);
-
-		tr.append($('<td></td>').text(list.length));
-		tr.append($('<td></td>').text(''));
-
-		var estimate = $('<td></td>').text('');
-		tr.append(estimate);
-
-		if (rarity === 'Unique' || rarity === 'Currency' || rarity === 'Rare' || rarity === 'Quest') {
-			searchMarket(item.name || item.typeLine, function (result) {
-				estimate.text(Math.round(result.avg));
-			});
-		}
-
-		tbody.append(tr);
-	}
-
 	function refreshStash() {
 		tbody.empty();
 		items = {};
@@ -272,14 +279,24 @@ $(function () {
 				tabIndex: tabIndex
 			},
 			success: function (response) {
-				$('#items .status').detach();
-
 				if (!response || !response.items) {
 					finishStashRefresh();
 					return;
 				}
 
+				response.tabs = response.tabs || [];
 				tabs = response.tabs || tabs;
+
+				if (config.tabs.length <= 0 && tabs.length) {
+					config.tabs = [];
+
+					$.each(tabs, function (key) {
+						config.tabs[key] = 1;
+					});
+
+					updateTabs();
+				}
+
 				console.log(response.items);
 
 				$.each(response.items, function (i, item) {
