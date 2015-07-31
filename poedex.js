@@ -93,7 +93,7 @@ $(function () {
 		if (currency === 'eternal') {
 			return;
 		}
-		
+
 		sortedCurrency.push(currency);
 	});
 
@@ -144,28 +144,6 @@ $(function () {
 		}
 
 		return price;
-		/*
-
-		var str = "";
-
-		for (i=0; i < sortedCurrency.length; i++) {
-			type = sortedCurrency[i];
-
-			if (!(type in price)) {
-				continue;
-			}
-
-			count = price[type];
-
-			if (count <= 0) {
-				continue;
-			}
-
-			str += String(count) + " " + currencyCodes[type] + " ";
-		}
-
-		return str;
-		*/
 	}
 
 	function getCachedPrice(name) {
@@ -198,6 +176,8 @@ $(function () {
 				return;
 			}
 		}
+
+		console.log("Searching market", name);
 
 		$.ajax({
 			url: "http://poe.trade/search",
@@ -423,8 +403,6 @@ $(function () {
 
 					updateTabs();
 				}
-
-				console.log(response.items);
 
 				$.each(response.items, function (i, item) {
 					item.tab = item.tab || tabID;
