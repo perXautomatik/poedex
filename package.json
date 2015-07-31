@@ -1,0 +1,13 @@
+{
+	"main": "index.html",
+	"name": "poedex",
+	"description": "Manage your PoE inventory and compare pricing",
+	"version": "1.0.0",
+	"keywords": [ "poe", "node-webkit" ],
+	"window": {
+		"title": "PoE Dex",
+		"icon": "icon.png",
+		"toolbar": true
+	},
+	"chromium-args": "--disable-web-security"
+}
