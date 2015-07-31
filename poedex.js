@@ -25,6 +25,23 @@ $(function () {
 		eternal: (288/1)
 	};
 
+	var currencyCodes = {
+		chrome: "chrome",
+		alteration: "alt",
+		jeweller: "jorb",
+		chance: "chance",
+		chisel: "chisel",
+		fusing: "fus",
+		alchemy: "alch",
+		scouring: "scour",
+		blessed: "borb",
+		chaos: "c",
+		regal: "reg",
+		gcp: "gcp",
+		exalted: "ex",
+		eternal: "et"
+	};
+
 	var rarityTypes = [
 		"Normal",
 		"Magic",
@@ -55,7 +72,7 @@ $(function () {
 	config.tabs = config.tabs || [];
 	market = market || {};
 
-	function normalizePrice(item) {
+	function currencyToChromes(item) {
 		var sum = 0.0;
 
 		$.each(currencyTypes, function (currency, ratio) {
@@ -68,6 +85,87 @@ $(function () {
 		});
 
 		return sum;
+	}
+
+	var sortedCurrency = [];
+
+	$.each(currencyTypes, function (currency, ratio) {
+		if (currency === 'eternal') {
+			return;
+		}
+		
+		sortedCurrency.push(currency);
+	});
+
+	sortedCurrency.sort(function (a, b) {
+		return Number(currencyTypes[b]) - Number(currencyTypes[a]);
+	});
+
+	console.log("Sorted currency", sortedCurrency);
+
+	function formatChromes(x) {
+		var i, type, ratio, count;
+		var price = {};
+
+		x = Math.round(x);
+
+		for (i=0; i < sortedCurrency.length; i++) {
+			type = sortedCurrency[i];
+			ratio = currencyTypes[type];
+			count = Math.floor(x / ratio);
+
+			if (count > 0) {
+				x -= (count * ratio);
+
+				if ('type' in price) {
+					price[type] += count;
+				} else {
+					price[type] = count;
+				}
+			}
+
+			if (x <= 0) {
+				break;
+			}
+		}
+
+		x = Math.floor(x);
+
+		if (x > 0) {
+
+
+			if ('chrome' in price) {
+				price.chrome += x;
+			} else {
+				price.chrome = x;
+			}
+
+			x = 0;
+		}
+
+		return price;
+		/*
+
+		var str = "";
+
+		for (i=0; i < sortedCurrency.length; i++) {
+			type = sortedCurrency[i];
+
+			if (!(type in price)) {
+				continue;
+			}
+
+			count = price[type];
+
+			if (count <= 0) {
+				continue;
+			}
+
+			str += String(count) + " " + currencyCodes[type] + " ";
+		}
+
+		return str;
+		*/
 	}
 
 	function getCachedPrice(name) {
@@ -115,7 +213,7 @@ $(function () {
 				var avg = 0.0;
 
 				$(doc).find('.item').each(function (i, tr) {
-					var price = normalizePrice($(tr).find('.currency'));
+					var price = currencyToChromes($(tr).find('.currency'));
 
 					if (price <= 0) {
 						return;
@@ -208,13 +306,33 @@ $(function () {
 
 		if (rarity === 'Unique' || rarity === 'Currency' || rarity === 'Rare' || rarity === 'Quest') {
 			searchMarket(item.name || item.typeLine, function (result) {
-				estimate.text(Math.round(result.avg));
+				var price = formatChromes(result.avg);
+
+				appendCurrency(estimate, price);
+
 			});
 		}
 
 		tr.append($('<td></td>').text(''));
 
 		tbody.append(tr);
+	}
+
+	function appendCurrency(node, price) {
+		var i, type;
+
+		for (i=0; i < sortedCurrency.length; i++) {
+			type = sortedCurrency[i];
+
+			if (!(type in price)) {
+				continue;
+			}
+
+			node.append($('<span></span>')
+				.text(price[type])
+				.addClass('currency-' + String(type))
+			);
+		}
 	}
 
 	function appendQuantity(str, qty) {
@@ -287,6 +405,15 @@ $(function () {
 				response.tabs = response.tabs || [];
 				tabs = response.tabs || tabs;
 
+				var tabID = null;
+
+				$.each(response.tabs, function (i, tab) {
+					if (tab.selected) {
+						tabID = tab.i;
+						return false;
+					}
+				});
+
 				if (config.tabs.length <= 0 && tabs.length) {
 					config.tabs = [];
 
@@ -300,7 +427,7 @@ $(function () {
 				console.log(response.items);
 
 				$.each(response.items, function (i, item) {
-					item.tab = item.tab || tabIndex;
+					item.tab = item.tab || tabID;
 					item.icon = item.icon || "";
 
 					if (item.icon.indexOf("://") < 0) {
@@ -316,12 +443,12 @@ $(function () {
 	}
 
 	function saveConfig() {
-		config.tabs = [];
+		config.tabs = {};
 
 		$('#tabs label').each(function (i, node) {
 			var input = $(node).find('input');
 			var index = input.data('index');
-			config.tabs[index] = input.is(':checked');
+			config.tabs[index] = input.is(':checked') || false;
 		});
 
 		localStorage.config = JSON.stringify(config);
@@ -372,7 +499,6 @@ $(function () {
 							.prop('checked', config.tabs[i])
 							.change(function (e) {
 								saveConfig();
-								tbody.empty();
 								refreshTable();
 							})
 					)
@@ -399,6 +525,10 @@ $(function () {
 
 	$('#refresh').click(function (e) {
 		refreshStash();
+	});
+
+	$('#checkall').change(function () {
+		$('#items input[type=checkbox]').prop('checked', $('#checkall').is(':checked'));
 	});
 
 	refreshStash();

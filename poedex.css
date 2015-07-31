@@ -34,3 +34,63 @@
 .unique {
 	color: #AF6025;
 }
+
+[class^="currency-"] {
+	display: inline-block;
+	font-size: 14px;
+	padding: 0;
+	margin: 0 2px;
+	padding-right: 24px;
+	background-size: 24px 24px;
+	background-repeat: no-repeat;
+	background-position: right center;
+}
+
+[class^="currency-"]:after {
+	content: "×";
+}
+
+.currency-exalted {
+	background-image: url(https://p7p4m6s5.ssl.hwcdn.net/image/Art/2DItems/Currency/CurrencyAddModToRare.png?scale=1&w=1&h=1&v=1745ebafbd533b6f91bccf588ab5efc53);
+}
+
+.currency-regal {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyUpgradeMagicToRare.png?scale=1&w=1&h=1&v=1187a8511b47b35815bd75698de1fa2a3);
+}
+
+.currency-chaos {
+	background-image: url(https://p7p4m6s5.ssl.hwcdn.net/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1&v=c60aa876dd6bab31174df91b1da1b4f93);
+}
+
+.currency-chance {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyUpgradeRandomly.png?scale=1&w=1&h=1&v=e4049939b9cd61291562f94364ee0f003);
+}
+
+.currency-alteration {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyRerollMagic.png?scale=1&w=1&h=1&v=6d9520174f6643e502da336e76b730d33);
+}
+
+.currency-chrome {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyRerollSocketColours.png?scale=1&w=1&h=1&v=9d377f2cf04a16a39aac7b14abc9d7c33);
+}
+
+.currency-gcp {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyGemQuality.png?scale=1&w=1&h=1&v=f11792b6dbd2f5f869351151bc3a45393);
+}
+
+.currency-blessed {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyImplicitMod.png?scale=1&w=1&h=1&v=472eeef04846d8a25d65b3d4f9ceecc83);
+}
+
+.currency-fusing {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyRerollSocketLinks.png?scale=1&w=1&h=1&v=0ad7134a62e5c45e4f8bc8a44b95540f3);
+}
+
+
+.currency-alchemy {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyUpgradeToRare.png?scale=1&w=1&h=1&v=89c110be97333995522c7b2c29cae7283);
+}
+
+.currency-chisel {
+	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyMapQuality.png?scale=1&w=1&h=1&v=f46e0a1af7223e2d4cae52bc3f9f7a1f3);
+}
