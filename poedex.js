@@ -69,7 +69,12 @@ $(function () {
 		console.log("Loaded market", market);
 	}
 
-	config.tabs = config.tabs || [];
+	config.tabs = config.tabs || null;
+
+	if (config.tabs) {
+		config.tabs = Object.keys(config.tabs).length ? config.tabs : null;
+	}
+
 	market = market || {};
 
 	function currencyToChromes(item) {
@@ -183,7 +188,7 @@ $(function () {
 			url: "http://poe.trade/search",
 			data: {
 				name: name,
-				league: "Tempest"
+				league: $('#league').val()
 				//online: "x"
 			},
 			success: function (response) {
@@ -241,11 +246,15 @@ $(function () {
 			sorted.push(list);
 		});
 
+		console.log("Unsorted", sorted);
+
 		sorted.sort(function (a, b) {
 			var pa = getCachedPrice(a[0].name || a[0].typeLine);
 			var pb = getCachedPrice(b[0].name || b[0].typeLine);
 			return pb - pa;
 		});
+
+		console.log("Sorted items", sorted);
 
 		tbody.empty();
 
@@ -326,7 +335,7 @@ $(function () {
 	function checkFilter(item) {
 		var fullName;
 
-		if (!config.tabs[item.tab]) {
+		if (config.tabs && !config.tabs[item.tab]) {
 			return false;
 		}
 
@@ -345,7 +354,7 @@ $(function () {
 
 	function hasMatching(list) {
 		for (var i=0; i < list.length; i++) {
-			if (checkFilter(list[0])) {
+			if (checkFilter(list[i])) {
 				return true;
 			}
 		}
@@ -372,7 +381,7 @@ $(function () {
 		$.ajax({
 			url: "https://www.pathofexile.com/character-window/get-stash-items",
 			data: {
-				league: "Tempest",
+				league: $('#league').val(),
 				tabs: 1,
 				tabIndex: tabIndex
 			},
@@ -383,7 +392,7 @@ $(function () {
 				}
 
 				response.tabs = response.tabs || [];
-				tabs = response.tabs || tabs;
+				tabs = response.tabs.length ? response.tabs : tabs;
 
 				var tabID = null;
 
@@ -394,14 +403,9 @@ $(function () {
 					}
 				});
 
-				if (config.tabs.length <= 0 && tabs.length) {
-					config.tabs = [];
-
-					$.each(tabs, function (key) {
-						config.tabs[key] = 1;
-					});
-
-					updateTabs();
+				if (tabID <= 0) {
+					finishStashRefresh();
+					return;
 				}
 
 				$.each(response.items, function (i, item) {
@@ -420,8 +424,21 @@ $(function () {
 		});
 	}
 
+	function finishStashRefresh() {
+		console.log("Finish stash refresh", items);
+		refreshTable();
+		updateStashTabCheckboxes();
+
+		if (tabs.length <= 0) {
+			showLogin();
+		}
+	}
+
 	function saveConfig() {
 		config.tabs = {};
+
+		config.thread = String($('#thread').val()).trim();
+		config.autoRefresh = String($('#autorefresh').val()).trim();
 
 		$('#tabs label').each(function (i, node) {
 			var input = $(node).find('input');
@@ -433,13 +450,36 @@ $(function () {
 		console.log("Save config", config);
 	}
 
-	function finishStashRefresh() {
-		refreshTable();
-		updateTabs();
+	function updateConfig() {
+		$('#thread').val(config.thread || "");
+		$('#autorefresh').val(config.autoRefresh || "0");
+		$('#league').val(config.league);
+		updateStashTabCheckboxes();
+	}
 
-		if (tabs.length <= 0) {
-			showLogin();
-		}
+	function updateStashTabCheckboxes() {
+		console.log("Updating stash tab checkboxes", tabs, config.tabs);
+		$('#tabs').empty();
+
+		$.each(tabs, function (i, tab) {
+			if (tab.hidden) {
+				return;
+			}
+
+			$('#tabs').append(
+				$('<label class="checkbox-inline"></label>')
+					.text(tab.n)
+					.prepend(
+						$('<input type="checkbox">')
+							.data('index', i)
+							.prop('checked', config.tabs ? config.tabs[i] : true)
+							.change(function (e) {
+								saveConfig();
+								refreshTable();
+							})
+					)
+			);
+		});
 	}
 
 	function showLogin() {
@@ -460,30 +500,6 @@ $(function () {
 		$('body').append(div);
 	}
 
-	function updateTabs() {
-		$('#tabs').empty();
-
-		$.each(tabs, function (i, tab) {
-			if (tab.hidden) {
-				return;
-			}
-
-			$('#tabs').append(
-				$('<label class="checkbox-inline"></label>')
-					.text(tab.n)
-					.prepend(
-						$('<input type="checkbox">')
-							.data('index', i)
-							.prop('checked', config.tabs[i])
-							.change(function (e) {
-								saveConfig();
-								refreshTable();
-							})
-					)
-			);
-		});
-	}
-
 	function updateFilter() {
 		var text = $('#filter').val().trim();
 
@@ -496,8 +512,30 @@ $(function () {
 		refreshTable();
 	}
 
+	function addConfigSaver(selector, key) {
+		$(selector).change(function () {
+			var value = String($(selector).val()).trim();
+
+			if (value === config[key]) {
+				return;
+			}
+
+			saveConfig();
+		});
+	}
+
+	addConfigSaver('#thread', 'thread');
+	addConfigSaver('#autorefresh', 'autoRefresh');
+
+	$('#league').change(function () {
+		config.league = $('#league').val();
+		market = {};
+		config.tabs = null;
+		tabs = null;
+		refreshStash();
+	});
+
 	$('#filter').change(function (e) {
-		tbody.empty();
 		updateFilter();
 	});
 

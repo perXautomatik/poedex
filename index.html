@@ -36,17 +36,31 @@
 	<fieldset>
 
 	<div class="form-group">
-		<label class="col-md-4 control-label" for="textinput">Thread</label>
+		<label class="col-md-4 control-label" for="league">League</label>
+
 		<div class="col-md-4">
-			<input id="textinput" name="textinput" placeholder="https://www.pathofexile.com/forum/view-thread/1330229" class="form-control input-md" type="text">
+			<select id="league" class="form-control">
+				<option value="Tempest">Tempest</option>
+				<option value="Warbands">Warbands</option>
+				<option value="Standard">Standard</option>
+				<option value="Hardcore">Hardcore</option>
+			</select>
+			<span class="help-block">Which league you want to load stash items for</span>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label class="col-md-4 control-label" for="thread">Thread</label>
+		<div class="col-md-4">
+			<input id="thread" placeholder="https://www.pathofexile.com/forum/view-thread/1330229" class="form-control input-md" type="text">
 			<span class="help-block">The URL of your thread</span>
 		</div>
 	</div>
 
 	<div class="form-group">
-		<label class="col-md-4 control-label" for="selectbasic">Auto Refresh</label>
+		<label class="col-md-4 control-label" for="autorefresh">Auto Refresh</label>
 		<div class="col-md-4">
-			<select id="selectbasic" name="selectbasic" class="form-control">
+			<select id="autorefresh" class="form-control">
 				<option value="0">Disabled</option>
 				<option value="5">5 minutes</option>
 				<option value="10">10 minutes</option>
@@ -62,7 +76,9 @@
 	<div class="form-group">
 		<label class="col-md-4 control-label" for="checkboxes">Stash Tabs</label>
 
-		<div class="col-md-4" id="tabs">
+		<div class="col-md-4">
+			<div id="tabs">Loading...</div>
+			<span class="help-block">Which stash tabs to search</span>
 		</div>
 	</div>
 
