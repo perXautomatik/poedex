@@ -2,7 +2,6 @@
 <html>
 <head>
 	<meta charset="utf-8"/>
-	<title>PoE Dex</title>
 
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 	<link rel="stylesheet" href="poedex.css">
@@ -20,10 +19,14 @@
 			Refresh
 		</button>
 
-		<button class="btn btn-default" id="publish">
-			<span class="glyphicon glyphicon-upload"></span>
-			Publish
-		</button>
+		<span>
+			<button class="btn btn-default" id="publish">
+				<span class="glyphicon glyphicon-upload"></span>
+				Publish
+			</button>
+
+			<span id="publish-status" class="label"></span>
+		<span>
 
 		<button class="btn btn-default pull-right" data-toggle="collapse" data-target="#config">
 			<span class="glyphicon glyphicon-cog"></span>
@@ -32,16 +35,6 @@
 	</p>
 
 	<div id="config" class="well collapse">
-
-	<div>
-		<button class="btn btn-warning" id="reload">
-			Reload App
-		</button>
-
-		<button class="btn btn-warning" id="debug">
-			Debug
-		</button>
-	</div>
 
 	<form class="form-horizontal">
 	<fieldset>
@@ -71,7 +64,7 @@
 	<div class="form-group">
 		<label class="col-md-4 control-label" for="template">Template</label>
 		<div class="col-md-4">
-			<textarea id="template" class="form-control input-md"></textarea>
+			<textarea id="template" class="form-control input-md" rows="5"></textarea>
 			<span class="help-block">
 				Template for your forum thread. Use <code>[items]</code> to include
 				a list of items.
@@ -83,13 +76,13 @@
 		<label class="col-md-4 control-label" for="autorefresh">Auto Refresh</label>
 		<div class="col-md-4">
 			<select id="autorefresh" class="form-control">
-				<option value="0">Disabled</option>
+				<option value="0" selected>Disabled</option>
 				<option value="5">5 minutes</option>
 				<option value="10">10 minutes</option>
 				<option value="30">30 minutes</option>
 			</select>
 			<span class="help-block">
-				How often to automatically update your stash and publish the forum
+				How often to automatically refresh your stash and publish the forum
 				thread
 			</span>
 		</div>
@@ -104,8 +97,33 @@
 		</div>
 	</div>
 
+	<div class="form-group">
+		<label class="col-md-4 control-label" for="checkboxes">Currency</label>
+		<div class="col-md-4">
+			<div id="currency"></div>
+			<span class="help-block">Select which currency you want to see prices</span>
+		</div>
+	</div>
+
 	</fieldset>
 	</form>
+
+	<div class="row">
+		<div class="col-xs-6">
+			<button class="btn btn-block btn-warning" id="reload">
+				<span class="glyphicon glyphicon-repeat"></span>
+				Reload App
+			</button>
+		</div>
+
+		<div class="col-xs-6">
+			<button class="btn btn-block" id="debug">
+				<span class="glyphicon glyphicon-wrench"></span>
+				Debug
+			</button>
+		</div>
+	</div>
+
 	</div>
 
 	<table id="items" class="table table-hover">

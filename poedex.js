@@ -7,6 +7,8 @@ $(function () {
 	var tabs = [];
 	var config = {};
 	var market = {};
+	var lastThreadUpdate = Date.now();
+	var threadUpdateInterval = null;
 
 	var currencyTypes = {
 		chrome: 1.0,
@@ -272,15 +274,15 @@ $(function () {
 
 		var rarity = String(rarityTypes[item.frameType]);
 
-		tr = $('<tr></tr>');
+		tr = $('<tr/>');
 
-		tr.append($('<td></td>')
+		tr.append($('<td/>')
 			.append('<input type="checkbox">')
 		);
 
-		tr.append($('<td></td>')
+		tr.append($('<td/>')
 			.append($('<img class="icon">').attr('src', item.icon))
-			.append($('<span></span>')
+			.append($('<span/>')
 				.text(appendQuantity(fullName, list.length))
 				.attr('class', rarity.toLowerCase())
 			)
@@ -358,19 +360,21 @@ $(function () {
 		return false;
 	}
 
-	function refreshStash() {
+	function refreshStash(f) {
 		tbody.empty();
 		items = {};
 
+		$('#publish').prop('disabled', true);
+
 		tbody.append(
-			$('<tr class="status"></tr>').append(
-				$('<td colspan="4"></td>').append(
+			$('<tr class="status"/>').append(
+				$('<td colspan="4"/>').append(
 					$('<div class="alert alert-success">Refreshing...</div>')
 				)
 			)
 		);
 
-		refreshTab(0);
+		refreshTab(0, f);
 	}
 
 	function checkStashResponse(response) {
@@ -381,7 +385,7 @@ $(function () {
 		return true;
 	}
 
-	function refreshTab(tabIndex) {
+	function refreshTab(tabIndex, f) {
 		$.ajax({
 			url: "https://www.pathofexile.com/character-window/get-stash-items",
 			data: {
@@ -393,7 +397,7 @@ $(function () {
 				var tabID;
 
 				if (!checkStashResponse(response)) {
-					finishStashRefresh();
+					finishStashRefresh(f);
 					return;
 				}
 
@@ -423,7 +427,7 @@ $(function () {
 					addItemData(item);
 				});
 
-				refreshTab(tabIndex + 1);
+				refreshTab(tabIndex + 1, f);
 			},
 			error: function (jqXHR, textStatus, errorThrown) {
 				console.log(jqXHR.responseText);
@@ -432,13 +436,21 @@ $(function () {
 		});
 	}
 
-	function finishStashRefresh() {
+	function finishStashRefresh(f) {
 		console.log("Finish stash refresh", items);
+
+		$('#publish').prop('disabled', false);
+
 		refreshTable();
 		updateStashTabCheckboxes();
 
 		if (tabs.length <= 0) {
 			showLogin();
+			return;
+		}
+
+		if (f) {
+			f();
 		}
 	}
 
@@ -465,6 +477,7 @@ $(function () {
 		$('#league').val(config.league);
 		$('#template').val(config.template || "");
 		updateStashTabCheckboxes();
+		updateCurrencyConfig();
 	}
 
 	function updateStashTabCheckboxes() {
@@ -477,7 +490,7 @@ $(function () {
 			}
 
 			$('#tabs').append(
-				$('<label class="checkbox-inline"></label>')
+				$('<label class="checkbox-inline"/>')
 					.text(tab.n)
 					.prepend(
 						$('<input type="checkbox">')
@@ -492,12 +505,31 @@ $(function () {
 		});
 	}
 
+	function updateCurrencyConfig() {
+		$('#currency').empty();
+
+		$.each(sortedCurrency, function (i, currency) {
+
+			$('#currency').append($('<div class="checkbox"/>')
+				.append($('<label/>')
+					.text(currency)
+					.prepend($('<input type="checkbox">'))
+				)
+			);
+		});
+	}
+
 	function showLogin() {
 		var div, iframe, button;
 
-		div = $('<div id="login"></div>');
+		div = $('<div id="login"/>');
 		iframe = $('<iframe src="https://www.pathofexile.com/login">');
-		button = $('<button class="btn btn-block">Cancel</button>');
+		button = $('<button>Cancel Login</button>').attr({
+			class: 'btn btn-danger',
+			id: 'login-cancel'
+		}).click(function () {
+			div.detach();
+		}).prepend('&nbsp;').prepend('<span class="glyphicon glyphicon-remove"/>');
 
 		iframe.load(function () {
 			if (iframe.contents().find('.loggedInStatus').length) {
@@ -575,12 +607,18 @@ $(function () {
 			return;
 		}
 
-		console.log("editing forum thread");
+		$('#publish').prop('disabled', true);
+		$('#publish-status').text('Grabbing thread...').addClass('label-warning');
 
 		fetchThread(threadID, function (token, title) {
-			var content = config.template;
+			var content = String(config.template || "");
+
+			if (content.indexOf("[items]") < 0) {
+				content += "\n[items]\n";
+			}
 
 			content = content.replace('[items]', generateListing());
+			$('#publish-status').text('Updating thread...');
 
 			$.ajax({
 				url: "https://www.pathofexile.com/forum/edit-thread/" + String(threadID),
@@ -592,12 +630,27 @@ $(function () {
 					submit: "Submit"
 				},
 				success: function (response) {
-
+					finishUpdateForumThread();
 				}
 			});
 		});
 
 		console.log("updating forum thread", threadID);
+	}
+
+	function finishUpdateForumThread() {
+		var date = new Date();
+		var time = date.toLocaleTimeString(navigator.language, {
+			hour: '2-digit',
+			minute:'2-digit'
+		});
+
+		$('#publish').prop('disabled', false);
+
+		$('#publish-status')
+			.text('Last updated at ' + time)
+			.removeClass('label-warning')
+			.addClass('label-success');
 	}
 
 	function generateListingBlock(rarity) {
@@ -674,6 +727,10 @@ $(function () {
 	});
 
 	$('#publish').click(function () {
+		if ($('#publish').prop('disabled')) {
+			return;
+		}
+
 		updateForumThread();
 	});
 
@@ -687,4 +744,23 @@ $(function () {
 
 	updateConfig();
 	refreshStash();
+
+	threadUpdateInterval = setInterval(function () {
+		var minutes = $('#autorefresh').val();
+
+		if (minutes <= 0) {
+			return;
+		}
+
+		var now = Date.now();
+		var span = now - lastThreadUpdate;
+
+		if (span >= (minutes * 60 * 1000)) {
+			lastThreadUpdate = now;
+
+			refreshStash(function () {
+				updateForumThread();
+			});
+		}
+	}, 1000 * 30);
 });
