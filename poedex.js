@@ -447,6 +447,7 @@ $(function () {
 
 		config.thread = String($('#thread').val()).trim();
 		config.autoRefresh = String($('#autorefresh').val()).trim();
+		config.template = String($('#template').val());
 
 		$('#tabs label').each(function (i, node) {
 			var input = $(node).find('input');
@@ -462,6 +463,7 @@ $(function () {
 		$('#thread').val(config.thread || "");
 		$('#autorefresh').val(config.autoRefresh || "0");
 		$('#league').val(config.league);
+		$('#template').val(config.template || "");
 		updateStashTabCheckboxes();
 	}
 
@@ -571,6 +573,9 @@ $(function () {
 
 		fetchThreadToken(threadID, function (token) {
 			var title = "Test Shop";
+			var content = config.template;
+
+			content = content.replace('[items]', generateListing());
 
 			$.ajax({
 				url: "https://www.pathofexile.com/forum/edit-thread/" + String(threadID),
@@ -578,7 +583,7 @@ $(function () {
 				data: {
 					forum_thread: token,
 					title: title,
-					content: "Test",
+					content: content,
 					submit: "Submit"
 				},
 				success: function (response) {
@@ -590,8 +595,58 @@ $(function () {
 		console.log("updating forum thread", threadID);
 	}
 
+	function generateListingBlock(rarity) {
+		var listing = "\n[spoiler=" + rarityTypes[rarity] + "]\n";
+		var count = 0;
+
+		rarity = Number(rarity);
+
+		$.each(items, function (type, list) {
+			if (Number(list[0].frameType) !== rarity) {
+				return;
+			}
+
+			$.each(list, function (i, item) {
+				if (!checkFilter(item)) {
+					return;
+				}
+
+				listing += '[linkItem location="Stash' + String(Number(item.tab) + 1) + '" ';
+				listing += 'league="' + String(item.league) + '" ';
+				listing += 'x="' + String(item.x) + '" ';
+				listing += 'y="' + String(item.y) + '" ';
+				listing += ']\n';
+
+				count++;
+			});
+		});
+
+		if (count <= 0) {
+			return "";
+		}
+
+		listing += "[/spoiler]\n";
+
+		return listing;
+	}
+
+	function generateListing() {
+		var listing = "";
+
+		$.each(rarityTypes, function (rarity, label) {
+			listing += generateListingBlock(rarity);
+			listing = listing.trim();
+		});
+
+		listing += "\n--------------------------\n";
+		listing += "Generated with [url=https://github.com/poetools/poedex]poedex[/url]\n";
+
+		return listing;
+	}
+
 	addConfigSaver('#thread', 'thread');
 	addConfigSaver('#autorefresh', 'autoRefresh');
+	addConfigSaver('#template', 'template');
 
 	$('#league').change(function () {
 		config.league = $('#league').val();
