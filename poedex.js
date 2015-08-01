@@ -607,7 +607,7 @@ $(function () {
 			}
 
 			$.each(list, function (i, item) {
-				if (!checkFilter(item)) {
+				if (config.tabs && !config.tabs[item.tab]) {
 					return;
 				}
 
