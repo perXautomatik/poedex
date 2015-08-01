@@ -528,6 +528,64 @@ $(function () {
 		});
 	}
 
+	function getQueryArg(url, key) {
+		key = key.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		var pattern = new RegExp("[\\?&]" + key + "=([^&#]*)");
+		var results = regex.exec(url);
+		if (!results) { return ""; }
+		return decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
+
+	function fetchThreadToken(threadID, f) {
+		$.get(
+			"https://www.pathofexile.com/forum/edit-thread/" + String(threadID),
+			function (response) {
+				var doc = $.parseHTML(response);
+				var token = $(doc).find('[name=forum_thread]').val();
+
+				if (!token) {
+					console.log("Missing token from edit-thread");
+					return;
+				}
+
+				f(token);
+			}
+		);
+	}
+
+	function updateForumThread() {
+		var threadID = String($('#thread').val())
+			.replace('https://www.pathofexile.com/forum/view-thread/', '')
+			.replace('/', '')
+			.trim();
+
+		if (threadID.length <= 0) {
+			return;
+		}
+
+		console.log("editing forum thread");
+
+		fetchThreadToken(threadID, function (token) {
+			var title = "Test Shop";
+
+			$.ajax({
+				url: "https://www.pathofexile.com/forum/edit-thread/" + String(threadID),
+				type: 'POST',
+				data: {
+					forum_thread: token,
+					title: title,
+					content: "Test",
+					submit: "Submit"
+				},
+				success: function (response) {
+
+				}
+			});
+		});
+
+		console.log("updating forum thread", threadID);
+	}
+
 	addConfigSaver('#thread', 'thread');
 	addConfigSaver('#autorefresh', 'autoRefresh');
 
@@ -551,5 +609,10 @@ $(function () {
 		$('#items input[type=checkbox]').prop('checked', $('#checkall').is(':checked'));
 	});
 
+	$('#publish').click(function () {
+		updateForumThread();
+	});
+
+	updateConfig();
 	refreshStash();
 });
