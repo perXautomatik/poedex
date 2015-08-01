@@ -672,6 +672,14 @@ $(function () {
 		updateForumThread();
 	});
 
+	$('#debug').click(function () {
+		require('nw.gui').Window.get().showDevTools();
+	});
+
+	$('#reload').click(function () {
+		window.location = 'index.html';
+	});
+
 	updateConfig();
 	refreshStash();
 });

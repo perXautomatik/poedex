@@ -7,7 +7,7 @@
 	"window": {
 		"title": "PoE Dex 1.0.3",
 		"icon": "icon.png",
-		"toolbar": true
+		"toolbar": false
 	},
 	"chromium-args": "--disable-web-security"
 }
