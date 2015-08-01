@@ -403,7 +403,7 @@ $(function () {
 					}
 				});
 
-				if (tabID === null) {
+				if (tabID <= 0) {
 					finishStashRefresh();
 					return;
 				}
