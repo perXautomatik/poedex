@@ -246,15 +246,11 @@ $(function () {
 			sorted.push(list);
 		});
 
-		console.log("Unsorted", sorted);
-
 		sorted.sort(function (a, b) {
 			var pa = getCachedPrice(a[0].name || a[0].typeLine);
 			var pb = getCachedPrice(b[0].name || b[0].typeLine);
 			return pb - pa;
 		});
-
-		console.log("Sorted items", sorted);
 
 		tbody.empty();
 
@@ -377,6 +373,14 @@ $(function () {
 		refreshTab(0);
 	}
 
+	function checkStashResponse(response) {
+		if (!response || !response.tabs || response.tabs.length <= 0) {
+			return false;
+		}
+
+		return true;
+	}
+
 	function refreshTab(tabIndex) {
 		$.ajax({
 			url: "https://www.pathofexile.com/character-window/get-stash-items",
@@ -386,15 +390,15 @@ $(function () {
 				tabIndex: tabIndex
 			},
 			success: function (response) {
-				if (!response || !response.items) {
+				var tabID;
+
+				if (!checkStashResponse(response)) {
 					finishStashRefresh();
 					return;
 				}
 
-				response.tabs = response.tabs || [];
-				tabs = response.tabs.length ? response.tabs : tabs;
-
-				var tabID = null;
+				tabs = response.tabs;
+				tabID = null;
 
 				$.each(response.tabs, function (i, tab) {
 					if (tab.selected) {
@@ -404,7 +408,7 @@ $(function () {
 				});
 
 				if (tabID <= 0) {
-					finishStashRefresh();
+					console.log("Response contains no stash tab");
 					return;
 				}
 
