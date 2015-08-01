@@ -420,6 +420,10 @@ $(function () {
 				});
 
 				refreshTab(tabIndex + 1);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(jqXHR.responseText);
+				console.log(textStatus + ': ' + errorThrown);
 			}
 		});
 	}
