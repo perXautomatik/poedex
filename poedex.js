@@ -542,7 +542,7 @@ $(function () {
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
 
-	function fetchThreadToken(threadID, f) {
+	function fetchThread(threadID, f) {
 		$.get(
 			"https://www.pathofexile.com/forum/edit-thread/" + String(threadID),
 			function (response) {
@@ -554,7 +554,13 @@ $(function () {
 					return;
 				}
 
-				f(token);
+				var title = $(doc).find('[name=title]').val();
+
+				if (title.length <= 0) {
+					title = "My Shop";
+				}
+
+				f(token, title);
 			}
 		);
 	}
@@ -571,8 +577,7 @@ $(function () {
 
 		console.log("editing forum thread");
 
-		fetchThreadToken(threadID, function (token) {
-			var title = "Test Shop";
+		fetchThread(threadID, function (token, title) {
 			var content = config.template;
 
 			content = content.replace('[items]', generateListing());
