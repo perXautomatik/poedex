@@ -7,8 +7,7 @@ $(function () {
 	var tabs = [];
 	var config = {};
 	var market = {};
-	var lastThreadUpdate = Date.now();
-	var threadUpdateInterval = null;
+	var autoTimerInterval = null;
 
 	var currencyTypes = {
 		chrome: 1.0,
@@ -459,6 +458,7 @@ $(function () {
 
 		config.thread = String($('#thread').val()).trim();
 		config.autoRefresh = String($('#autorefresh').val()).trim();
+		config.autoPoke = String($('#autopoke').val()).trim();
 		config.template = String($('#template').val());
 
 		$('#tabs label').each(function (i, node) {
@@ -467,13 +467,31 @@ $(function () {
 			config.tabs[index] = input.is(':checked') || false;
 		});
 
+		writeConfig();
+	}
+
+	function writeConfig() {
 		localStorage.config = JSON.stringify(config);
 		console.log("Save config", config);
+	}
+
+	function addConfigSaver(selector, key) {
+		$(selector).change(function () {
+			var value = String($(selector).val()).trim();
+
+			if (value === config[key]) {
+				return;
+			}
+
+			saveConfig();
+		});
 	}
 
 	function updateConfig() {
 		$('#thread').val(config.thread || "");
 		$('#autorefresh').val(config.autoRefresh || "0");
+		$('#autopoke').val(config.autoPoke || "0");
+		$('#autopoke-url').val(config.autoPokeURL || "");
 		$('#league').val(config.league);
 		$('#template').val(config.template || "");
 		updateStashTabCheckboxes();
@@ -554,24 +572,89 @@ $(function () {
 		refreshTable();
 	}
 
-	function addConfigSaver(selector, key) {
-		$(selector).change(function () {
-			var value = String($(selector).val()).trim();
-
-			if (value === config[key]) {
-				return;
-			}
-
-			saveConfig();
-		});
-	}
-
 	function getQueryArg(url, key) {
 		key = key.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 		var pattern = new RegExp("[\\?&]" + key + "=([^&#]*)");
 		var results = regex.exec(url);
 		if (!results) { return ""; }
 		return decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
+
+	function updatePoke() {
+		if (!config.autoPoke) {
+			return;
+		}
+
+		if (!config.autoPokeURL) {
+			fetchPokeURL(function () {
+				if (!config.autoPokeURL) {
+					return;
+				}
+
+				updateConfig();
+				writeConfig();
+				updatePoke();
+			});
+
+			return;
+		}
+
+		$.post(config.autoPokeURL, function (response) {
+			console.log("marked as online?");
+		});
+	}
+
+	function fetchMessageList(f) {
+		$.get('https://www.pathofexile.com/private-messages', function (response) {
+			var doc = $.parseHTML(response);
+			var list = $(doc).find('a[href^="/private-messages/view/folder/inbox/id/"]');
+			f(list);
+		}).fail(f);
+	}
+
+	function fetchMessage(id, f) {
+		id = String(id).replace('/', '').trim();
+		var url = "https://www.pathofexile.com/private-messages/view/folder/inbox/id/" + id;
+
+		$.get(url, function (response) {
+			var doc = $.parseHTML(response);
+			var posts = [];
+
+			$(doc).find('.message-details').each(function (i, node) {
+				posts.push($(node).text().trim());
+			});
+
+			f(posts);
+		}).fail(f);
+	}
+
+	function fetchPokeURL(f) {
+		var pattern = /http:\/\/control.poe.xyz.is\/([^\s]+)/i;
+
+		fetchMessageList(function (list) {
+			list.each(function (i, message) {
+				if ($(message).text().trim() !== 'You are very welcome.') {
+					return;
+				}
+
+				var messageID = $(message).attr('href')
+					.replace('private-messages/view/folder/inbox/id', '')
+					.replace('/', '')
+					.trim();
+
+				fetchMessage(messageID, function (posts) {
+					$.each(posts, function (i, text) {
+						var match = text.match(pattern);
+
+						if (match && match.length) {
+							config.autoPokeURL = match[0];
+							f();
+							return false;
+						}
+					});
+				});
+			});
+		});
 	}
 
 	function fetchThread(threadID, f) {
@@ -704,6 +787,8 @@ $(function () {
 
 	addConfigSaver('#thread', 'thread');
 	addConfigSaver('#autorefresh', 'autoRefresh');
+	addConfigSaver('#autopoke', 'autoPoke');
+	addConfigSaver('#autopoke-url', 'autoPokeURL');
 	addConfigSaver('#template', 'template');
 
 	$('#league').change(function () {
@@ -732,6 +817,7 @@ $(function () {
 		}
 
 		updateForumThread();
+		updatePoke();
 	});
 
 	$('#debug').click(function () {
@@ -741,8 +827,6 @@ $(function () {
 	$('#reload').click(function () {
 		window.location = 'index.html';
 	});
-
-
 
 	function getClickedRow(e) {
 		var node = $(e.target);
@@ -840,22 +924,41 @@ $(function () {
 	updateConfig();
 	refreshStash();
 
-	threadUpdateInterval = setInterval(function () {
-		var minutes = $('#autorefresh').val();
+	function autoTimer(selector, key, f) {
+		var now = Date.now();
+		var minutes = $(selector).val();
 
 		if (minutes <= 0) {
 			return;
 		}
 
-		var now = Date.now();
-		var span = now - lastThreadUpdate;
+		var then = config[key];
+
+		if (then <= 0) {
+			config[key] = now;
+			f();
+			return;
+		}
+
+		var span = now - then;
 
 		if (span >= (minutes * 60 * 1000)) {
-			lastThreadUpdate = now;
+			config[key] = now;
+			f();
+		}
+	}
 
+	autoTimerInterval = setInterval(function () {
+		var now = Date.now();
+
+		autoTimer('#autorefresh', 'lastThreadUpdate', function () {
 			refreshStash(function () {
 				updateForumThread();
 			});
-		}
+		});
+
+		autoTimer('#autoPoke', 'lastPokeUpdate', function () {
+			updatePoke();
+		});
 	}, 1000 * 30);
 });

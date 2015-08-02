@@ -2,10 +2,10 @@
 	"main": "index.html",
 	"name": "poedex",
 	"description": "Manage your PoE inventory and compare pricing",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"keywords": [ "poe", "node-webkit" ],
 	"window": {
-		"title": "PoE Dex 1.0.4",
+		"title": "PoE Dex 1.0.5",
 		"icon": "icon.png",
 		"toolbar": false
 	},
