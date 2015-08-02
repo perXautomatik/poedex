@@ -9,6 +9,13 @@ mark you as online.
 *Note: This program isn't associated with GGG or poe.trade. It simply talks to
 those websites to get data.*
 
+## Screenshots
+
+![Item Listing](http://i.imgur.com/OYmMUaH.png)
+
+![Configuration](http://i.imgur.com/218Kp6B.png)
+
+
 ## Installation
 
 You can download a release from https://github.com/poetools/poedex/releases,
