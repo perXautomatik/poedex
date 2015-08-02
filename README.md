@@ -54,7 +54,6 @@ cross-domain restrictions. Using `nw.js` lets us get all the benefits of a brows
 without the (rather silly) access restrictions.
 
 ### How do I mark items to sell?
-### How do I update my forum thread?
 
 Work is still being done on these features.
 
