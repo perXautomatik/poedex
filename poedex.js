@@ -274,7 +274,7 @@ $(function () {
 
 		var rarity = String(rarityTypes[item.frameType]);
 
-		tr = $('<tr/>');
+		tr = $('<tr/>').data('items', list);
 
 		tr.append($('<td/>')
 			.append('<input type="checkbox">')
@@ -282,9 +282,9 @@ $(function () {
 
 		tr.append($('<td/>')
 			.append($('<img class="icon">').attr('src', item.icon))
-			.append($('<span/>')
+			.append($('<span class="item"/>')
 				.text(appendQuantity(fullName, list.length))
-				.attr('class', rarity.toLowerCase())
+				.addClass(rarity.toLowerCase())
 			)
 		);
 
@@ -740,6 +740,101 @@ $(function () {
 
 	$('#reload').click(function () {
 		window.location = 'index.html';
+	});
+
+
+
+	function getClickedRow(e) {
+		var node = $(e.target);
+
+		if (node.parent('input,textarea,.btn').length) {
+			return;
+		}
+
+		e.preventDefault();
+		return node.parent('tr');
+	}
+
+	var checkState = null;
+
+	$('#items').mousedown(function (e) {
+		var tr = getClickedRow(e);
+		if (!tr) { return; }
+		var checkbox = tr.find('input[type=checkbox]');
+		checkState = !checkbox.is(':checked');
+		checkbox.prop('checked', checkState);
+	}).mousemove(function (e) {
+		if (checkState === null) {
+			return;
+		}
+
+		var tr = getClickedRow(e);
+		if (!tr) { return; }
+		var checkbox = tr.find('input[type=checkbox]');
+		checkbox.prop('checked', checkState);
+	}).mouseup(function (e) {
+		checkState = null;
+	});
+
+	$('#items').mousemove(function (e) {
+		var node = $(e.target);
+		var tr = node.parents('tr');
+
+		$('#hover-stats').empty();
+
+		if (tr.length <= 0) {
+			$('#hover-stats').hide();
+			return;
+		}
+
+		var td = tr.find('td:nth-child(2)');
+		var list = tr.data('items');
+
+		if (!list || list.length <= 0) {
+			$('#hover-stats').hide();
+			return;
+		}
+
+		var item = list[0];
+
+		item.implicitMods = item.implicitMods || [];
+		item.explicitMods = item.explicitMods || [];
+
+		if (item.implicitMods.length <= 0 && item.explicitMods.length <= 0) {
+			$('#hover-stats').hide();
+			return;
+		}
+
+		$.each(item.implicitMods, function (i, str) {
+			$('#hover-stats').append($('<div class="mod"/>').text(str));
+		});
+
+		if (item.implicitMods.length) {
+			$('#hover-stats').append('<div class="line"/>');
+		}
+
+		$.each(item.explicitMods, function (i, str) {
+			$('#hover-stats').append($('<div class="mod"/>').text(str));
+		});
+
+		var pos = td.offset();
+
+		$('#hover-stats').offset({
+			left: pos.left + td.width() - $('#hover-stats').width(),
+			top: pos.top + td.height() / 2 - $('#hover-stats').height() / 2
+		}).show();
+	});
+
+	$(window).mousemove(function (e) {
+		var node = $(e.target);
+
+		if (node.is('#hover-stats') || node.parents('#hover-stats').length) {
+			return;
+		}
+
+		if (node.parents('#items').length <= 0) {
+			$('#hover-stats').hide();
+		}
 	});
 
 	updateConfig();

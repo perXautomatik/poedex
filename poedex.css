@@ -102,11 +102,35 @@ textarea:focus {
 	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyRerollSocketLinks.png?scale=1&w=1&h=1&v=0ad7134a62e5c45e4f8bc8a44b95540f3);
 }
 
-
 .currency-alchemy {
 	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyUpgradeToRare.png?scale=1&w=1&h=1&v=89c110be97333995522c7b2c29cae7283);
 }
 
 .currency-chisel {
 	background-image: url(http://webcdn.pathofexile.com/image/Art/2DItems/Currency/CurrencyMapQuality.png?scale=1&w=1&h=1&v=f46e0a1af7223e2d4cae52bc3f9f7a1f3);
+}
+
+.item {
+	cursor: default;
+}
+
+.item:hover {
+	text-decoration: underline;
+}
+
+#hover-stats {
+	position: absolute;
+	background: rgba(0, 0, 0, 0.666);
+	padding: 5px;
+	color: #ccc;
+	width: 300px;
+	font-size: 12px;
+	box-shadow: 0 0 10px rgba(0,0,0,0.75);
+	border: 1px solid #000;
+}
+
+#hover-stats .line {
+	margin: 3px 0;
+	height: 1px;
+	background: #ccc;
 }
